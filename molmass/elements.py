@@ -48,20 +48,24 @@ from __future__ import annotations
 __version__ = '2025.9.4'
 
 __all__ = [
-    'Element',
-    'Isotope',
-    'Particle',
     'ELECTRON',
     'ELEMENTARY_CHARGE',
     'ELEMENTS',
     'NEUTRON',
     'POSITRON',
     'PROTON',
+    'Element',
+    'Isotope',
+    'Particle',
 ]
 
-from collections.abc import Iterator
+
 from dataclasses import dataclass
 from functools import cached_property
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 
 @dataclass
@@ -185,7 +189,7 @@ class Element:
     def description(self) -> str:
         """Text description of element."""
         try:
-            from . import elements_descriptions  # noqa
+            from . import elements_descriptions  # noqa: F401
         except ImportError:
             return ''
 
@@ -372,8 +376,7 @@ class Elements:
             '\n    '.join(line for line in repr(element).splitlines())
             for element in self._list
         )
-        elements = f'Elements(\n    {elements},\n)'
-        return elements
+        return f'Elements(\n    {elements},\n)'
 
     def __str__(self) -> str:
         return '[{}]'.format(', '.join(ele.symbol for ele in self._list))
@@ -2221,30 +2224,30 @@ def sqlite_script() -> str:
     """
     ]
 
-    for key, label in PERIODS.items():
-        sql.append(
-            f"""INSERT INTO "period" VALUES ({key}, '{label}', NULL);"""
-        )
+    sql.extend(
+        f"""INSERT INTO "period" VALUES ({key}, '{label}', NULL);"""
+        for key, label in PERIODS.items()
+    )
 
-    for key, (label, descr) in GROUPS.items():
-        sql.append(
-            f"""INSERT INTO "group" VALUES ({key}, '{label}', '{descr}');"""
-        )
+    sql.extend(
+        f"""INSERT INTO "group" VALUES ({key}, '{label}', '{descr}');"""
+        for key, (label, descr) in GROUPS.items()
+    )
 
-    for data in BLOCKS.items():
-        sql.append(
-            f"""INSERT INTO "block" VALUES ('{data[0]}', '{data[1]}');"""
-        )
+    sql.extend(
+        f"""INSERT INTO "block" VALUES ('{data[0]}', '{data[1]}');"""
+        for data in BLOCKS.items()
+    )
 
-    for series in sorted(SERIES):
-        sql.append(
-            f"""INSERT INTO "series" VALUES (
-            {series}, '{SERIES[series]}', ''\n);"""
-        )
+    sql.extend(
+        f"""INSERT INTO "series" VALUES (
+        {series}, '{SERIES[series]}', ''\n);"""
+        for series in sorted(SERIES)
+    )
 
     for ele in ELEMENTS:
         descr = word_wrap(
-            ele.description.replace("'", "\'\'").replace("\"", "\"\""),
+            ele.description.replace("'", "''").replace('"', '""'),
             linelen=74,
             indent=0,
             joinstr='\n ',
@@ -2259,32 +2262,31 @@ def sqlite_script() -> str:
             '{ele.oxistates}', '{descr}'\n);"""
         )
 
-    for ele in ELEMENTS:
-        for iso in ele.isotopes.values():
-            sql.append(
-                f"""INSERT INTO "isotope" VALUES (
-                {ele.number}, {iso.massnumber},
-                {iso.mass:.10f}, {iso.abundance:.8f}\n);"""
-            )
+    sql.extend(
+        f"""INSERT INTO "isotope" VALUES (
+        {ele.number}, {iso.massnumber},
+        {iso.mass:.10f}, {iso.abundance:.8f}\n);"""
+        for iso in ele.isotopes.values()
+        for ele in ELEMENTS
+    )
 
-    for ele in ELEMENTS:
-        for (shell, subshell), count in ele.eleconfig_dict.items():
-            sql.append(
-                f"""INSERT INTO "eleconfig" VALUES (
-                {ele.number}, {shell}, '{subshell}', {count}\n);"""
-            )
+    sql.extend(
+        f"""INSERT INTO "eleconfig" VALUES (
+        {ele.number}, {shell}, '{subshell}', {count}\n);"""
+        for (shell, subshell), count in ele.eleconfig_dict.items()
+        for ele in ELEMENTS
+    )
 
-    for ele in ELEMENTS:
-        for i, ionenergy in enumerate(ele.ionenergy):
-            sql.append(
-                f"""INSERT INTO "ionenergy" VALUES (
-                {ele.number}, {i + 1}, {ionenergy:.4f}\n);"""
-            )
+    sql.extend(
+        f"""INSERT INTO "ionenergy" VALUES (
+        {ele.number}, {i + 1}, {ionenergy:.4f}\n);"""
+        for i, ionenergy in enumerate(ele.ionenergy)
+        for ele in ELEMENTS
+    )
 
     sqlstr = '\n'.join(sql)
     sqlstr = sqlstr.replace('                ', '            ')
-    sqlstr = sqlstr.replace('        ', '')
-    return sqlstr
+    return sqlstr.replace('        ', '')
 
 
 def word_wrap(
@@ -2312,6 +2314,5 @@ def word_wrap(
 if __name__ == '__main__':
     import doctest
 
-    print(f'ELEMENTS = {repr(ELEMENTS)}')
-    print(sqlite_script())
+    print(f'ELEMENTS = {ELEMENTS!r}\n{sqlite_script()}')  # noqa: T201
     doctest.testmod(verbose=False)
