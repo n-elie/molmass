@@ -206,7 +206,7 @@ def response(
     /,  # for compatibility
     url: str,
     template: str | None = None,
-    help: str | None = None,
+    help: str | None = None,  # noqa: A002
     heads: str = '',
 ) -> str:
     """Return HTML document from submitted web form.
@@ -222,7 +222,7 @@ def response(
     if template is None:
         template = PAGE
     if help is None:
-        help = HELP
+        help = HELP  # noqa: A001
 
     formula = form.get('q', '')
     if not formula:
@@ -238,7 +238,7 @@ def response(
     else:
         content = help.format(version=molmass.__version__)
     if formula:
-        formula = escape(formula, True)
+        formula = escape(formula, quote=True)
     return template.format(
         formula=formula,
         url=url,
@@ -266,8 +266,7 @@ def analyze(
         formula = re.sub(
             r'\[(\d+)([A-Za-z]{1,2})\]', r'<sup>\1</sup>\2', formula
         )
-        formula = re.sub(r'([A-Za-z]{1,2})(\d+)', r'\1<sub>\2</sub>', formula)
-        return formula
+        return re.sub(r'([A-Za-z]{1,2})(\d+)', r'\1<sub>\2</sub>', formula)
 
     spectrum: molmass.Spectrum | None
     result: list[str] = ['<h2 class="hidden">Results</h2>']
@@ -359,7 +358,7 @@ def analyze(
             result.append('</table>')
 
         if spectrum is not None and len(spectrum) > 1:
-            if abs(spectrum._charge) > 1:
+            if abs(spectrum._charge) > 1:  # noqa: SLF001
                 mz = '\n<th scope="col">m/z</th>'
             else:
                 mz = ''
@@ -386,7 +385,7 @@ def analyze(
                         f'<th scope="row">{item.massnumber}</th>',
                         f'<td>{item.mass:.{prec}f}</td>',
                         f'<td>{item.fraction * 100.:.6}</td>',
-                        f'<td>{item.intensity:.6}</td>' f'{mz}',
+                        f'<td>{item.intensity:.6}</td>{mz}',
                         '</tr>',
                     )
                 )
@@ -399,8 +398,8 @@ def analyze(
         text = msg[0][0].upper() + msg[0][1:]
         details = '\n'.join(msg[1:])
         result.append(
-            f'<h3>Error: {escape(text, True)}</h3>'
-            f'<pre>{escape(details, True)}</pre>'
+            f'<h3>Error: {escape(text, quote=True)}</h3>'
+            f'<pre>{escape(details, quote=True)}</pre>'
         )
 
     return '\n'.join(i for i in result if i)
@@ -520,10 +519,10 @@ def cgi(url: str, *, open_browser: bool = True, debug: bool = True) -> int:
         os.chdir(dirname)
 
     if os.getenv('SERVER_NAME'):
-        print('Content-type: text/html\n\n')
+        print('Content-type: text/html\n\n')  # noqa: T201
         request = cgi.FieldStorage()
         request.get = request.getfirst
-        print(response(request, url))
+        print(response(request, url))  # noqa: T201
     else:
         from http.server import CGIHTTPRequestHandler, HTTPServer
         from urllib.parse import urlparse
@@ -536,7 +535,7 @@ def cgi(url: str, *, open_browser: bool = True, debug: bool = True) -> int:
             return False
 
         CGIHTTPRequestHandler.is_cgi = is_cgi  # type: ignore[method-assign]
-        print('Running CGI script at', url)
+        print('Running CGI script at', url)  # noqa: T201
         if open_browser:
             webbrowser(url)
         urlp = urlparse(url)
