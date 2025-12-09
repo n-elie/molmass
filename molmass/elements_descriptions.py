@@ -822,6 +822,6 @@ if __name__ == '__main__':
         descr = word_wrap(
             ele.description, linelen=70, indent=0, joinstr=' "\n    "'
         )
-        print(
-            f'ELEMENTS[{ele.symbol!r}].description = ' f'(\n    "{descr}"\n)'
+        print(  # noqa: T201
+            f'ELEMENTS[{ele.symbol!r}].description = (\n    "{descr}"\n)'
         )
