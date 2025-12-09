@@ -63,7 +63,7 @@ class MainApp(wx.App):
     icon = 'icon.png'
     try:
         icon = os.path.join(os.path.dirname(__file__), icon)
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
     def OnInit(self):
@@ -265,14 +265,13 @@ class PeriodicPanel(wx.Panel):
         rows = len(PeriodicPanel.LAYOUT.splitlines()) - 2
         cols = len(PeriodicPanel.LAYOUT.splitlines()[1].split())
         self.sizer = wx.FlexGridSizer(rows, cols, 0, 0)
-        self.buttons = list(range(0, len(ELEMENTS)))
+        self.buttons = list(range(len(ELEMENTS)))
         self.selected = -1
         self.info = ElementPanel(self, -1, pos=(0, 0))
 
         # create element buttons
-        buttonsize = int(math.ceil((self.info.Size[0] + 4) / 9.0))
-        if buttonsize < 30:
-            buttonsize = 30
+        buttonsize = math.ceil((self.info.Size[0] + 4) / 9.0)
+        buttonsize = max(buttonsize, 30)
         for row in PeriodicPanel.LAYOUT.splitlines()[1:-1]:
             for col in row.split():
                 if col == '.':
@@ -551,9 +550,11 @@ class ElementPanel(wx.Panel):
 
         label = []
         for orb in ele.eleconfig.split():
-            if not orb.startswith('[') and len(orb) > 2:
-                orb = orb[:2] + '<sup>' + orb[2:] + '</sup>'
-            label.append(orb)
+            if orb.startswith('[') and len(orb) > 2:
+                label.append(orb)
+            else:
+                label.append(orb[:2] + '<sup>' + orb[2:] + '</sup>')
+
         label.append('<sup> </sup>')  # fix ADJUST_MINSIZE
         self.eleconfig.SetLabel(' '.join(label))
 
@@ -756,19 +757,25 @@ class DetailsPanel(wx.Panel):
 
     def OnSelect(self, evt):
         self.SetSelection(evt.GetSelection())
-        event = SelectionEvent(pteEVT_ELE_CHANGED, self.GetId(), self.selected)
+        event = SelectionEvent(
+            PTE_EVT_ELE_CHANGED, self.GetId(), self.selected
+        )
         self.GetEventHandler().ProcessEvent(event)
         evt.Skip()
 
     def OnSelectName(self, evt):
         self.SetSelection(ELEMENTS[evt.GetString()].number - 1)
-        event = SelectionEvent(pteEVT_ELE_CHANGED, self.GetId(), self.selected)
+        event = SelectionEvent(
+            PTE_EVT_ELE_CHANGED, self.GetId(), self.selected
+        )
         self.GetEventHandler().ProcessEvent(event)
         evt.Skip()
 
     def OnSelectSymbol(self, evt):
         self.SetSelection(ELEMENTS[evt.GetString()].number - 1)
-        event = SelectionEvent(pteEVT_ELE_CHANGED, self.GetId(), self.selected)
+        event = SelectionEvent(
+            PTE_EVT_ELE_CHANGED, self.GetId(), self.selected
+        )
         self.GetEventHandler().ProcessEvent(event)
         evt.Skip()
 
@@ -980,7 +987,7 @@ class DisclosureCtrl(buttons.GenBitmapTextToggleButton):
         self.SetToolTip('Show' if self.up else 'Hide')
 
     def DoGetBestSize(self):
-        width, height, usemin = self._GetLabelSize()
+        width, height, _usemin = self._GetLabelSize()
         return (width + 5, height + 4)
 
     def OnPaint(self, evt):
@@ -1032,7 +1039,7 @@ class DisclosureCtrl(buttons.GenBitmapTextToggleButton):
         dc.SetTextForeground(color)
 
         label = self.GetLabel()
-        txtwidth, txtheight = dc.GetTextExtent(label)
+        _txtwidth, txtheight = dc.GetTextExtent(label)
         # center bitmap and text
         # xpos = (width - bmpwidth - txtwidth) // 2 if center else 0
         xpos = 0
@@ -1056,8 +1063,8 @@ class SelectionEvent(wx.PyCommandEvent):
         return self.selection
 
 
-pteEVT_ELE_CHANGED = wx.NewEventType()
-EVT_ELE_CHANGED = wx.PyEventBinder(pteEVT_ELE_CHANGED, 1)
+PTE_EVT_ELE_CHANGED = wx.NewEventType()
+EVT_ELE_CHANGED = wx.PyEventBinder(PTE_EVT_ELE_CHANGED, 1)
 
 SPACER = 12 if wx.Platform == '__WXMAC__' else 10
 BORDER = 22 if wx.Platform == '__WXMAC__' else 10
