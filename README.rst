@@ -17,7 +17,7 @@ of the chemical elements.
 
 :Author: `Christoph Gohlke <https://www.cgohlke.com>`_
 :License: BSD-3-Clause
-:Version: 2025.11.11
+:Version: 2025.12.12
 :DOI: `10.5281/zenodo.7135495 <https://doi.org/10.5281/zenodo.7135495>`_
 
 Quickstart
@@ -49,13 +49,17 @@ Requirements
 This revision was tested with the following requirements and dependencies
 (other versions may work):
 
-- `CPython <https://www.python.org>`_ 3.11.9, 3.12.10, 3.13.9, 3.14.0
+- `CPython <https://www.python.org>`_ 3.11.9, 3.12.10, 3.13.11 3.14.2
 - `Flask <https://pypi.org/project/Flask/>`_ 3.1.2 (optional)
 - `Pandas <https://pypi.org/project/pandas/>`_ 2.3.3 (optional)
 - `wxPython <https://pypi.org/project/wxPython/>`_ 4.2.4 (optional)
 
 Revisions
 ---------
+
+2025.12.12
+
+- Make boolean arguments keyword-only (breaking).
 
 2025.11.11
 
