@@ -29,7 +29,7 @@
 
 """Unittests for the molmass package.
 
-:Version: 2025.11.11
+:Version: 2025.12.12
 
 """
 
@@ -74,8 +74,19 @@ from molmass.molmass import gcd, precision_digits
 def test_version():
     """Assert molmass versions match docstrings."""
     ver = ':Version: ' + __version__
+    assert __doc__ is not None
+    assert molmass.__doc__ is not None
     assert ver in __doc__
     assert ver in molmass.__doc__
+
+
+def test_unused_import():
+    """Test unused imported symbols."""
+    assert AMINOACIDS is not None
+    assert DEOXYNUCLEOTIDES is not None
+    assert GROUPS is not None
+    assert NUCLEOTIDES is not None
+    assert PREPROCESSORS is not None
 
 
 def test_empty():
@@ -117,9 +128,9 @@ def test_empty():
     assert str(spectrum) == ''
     assert repr(spectrum) == 'Spectrum({})'
     with pytest.raises(ValueError):
-        spectrum.range
+        _ = spectrum.range
     with pytest.raises(ValueError):
-        spectrum.peak
+        _ = spectrum.peak
 
 
 def test_etoh():
@@ -205,7 +216,7 @@ def test_etoh():
 
 
 @pytest.mark.parametrize(
-    'formula, empirical, mass',
+    ('formula', 'empirical', 'mass'),
     [
         (
             ''.join(e.symbol for e in ELEMENTS),
@@ -290,11 +301,11 @@ def test_formulas_mass(formula, empirical, mass):
 def test_formulas_invalid(formula):
     """Test invalid formulas."""
     with pytest.raises(FormulaError):
-        Formula(formula).empirical
+        _ = Formula(formula).empirical
 
 
 @pytest.mark.parametrize(
-    'formula, message, detail',
+    ('formula', 'message', 'detail'),
     [
         ('abc', 'unexpected character', 'abc\n^'),
         ('(H2O)2-H2O', 'subtraction not allowed', '(H2O)2-H2O\n......^'),
@@ -305,13 +316,13 @@ def test_formulas_invalid(formula):
 def test_formula_error(formula, message, detail):
     """Test Formula errors."""
     with pytest.raises(FormulaError) as excinfo:
-        Formula(formula).formula
+        _ = Formula(formula).formula
     assert message in str(excinfo.value)
     assert detail in str(excinfo.value)
 
 
 @pytest.mark.parametrize(
-    'formula, expected',
+    ('formula', 'expected'),
     [
         # elements and counts
         ('H2O', 'H2O'),
@@ -352,7 +363,7 @@ def test_formula_repr(formula, expected):
 
 
 @pytest.mark.parametrize(
-    'formula, expected',
+    ('formula', 'expected'),
     [
         ('H', {'H': {0: 1}}),
         ('[2H]2O', {'O': {0: 1}, 'H': {2: 2}}),
@@ -364,7 +375,7 @@ def test_formula_elements(formula, expected):
 
 
 @pytest.mark.parametrize(
-    'formula, expected',
+    ('formula', 'expected'),
     [
         ('BrC2H5', 'C2H5Br'),
         ('[(CH3)3Si2]2NNa', 'C6H18NNaSi4'),
@@ -376,7 +387,7 @@ def test_formula_formula(formula, expected):
 
 
 @pytest.mark.parametrize(
-    'formula, expected',
+    ('formula', 'expected'),
     [
         ('H2O', 'H2O'),
         ('C6H12O6', 'CH2O'),
@@ -389,7 +400,7 @@ def test_formula_empirical(formula, expected):
 
 
 @pytest.mark.parametrize(
-    'formula, expected',
+    ('formula', 'expected'),
     [
         ('EtOH', '(C2H5)OH'),
         ('CuSO4.5H2O', 'CuSO4(H2O)5'),
@@ -402,7 +413,7 @@ def test_formula_expanded(formula, expected):
 
 
 @pytest.mark.parametrize(
-    'formula, expected',
+    ('formula', 'expected'),
     [
         ('CH3COOH', 8),
         ('WQ', 44),
@@ -414,7 +425,7 @@ def test_formula_atoms(formula, expected):
 
 
 @pytest.mark.parametrize(
-    'formula, expected',
+    ('formula', 'expected'),
     [
         ('H2O', 0),
         ('SO4_2-', -2),
@@ -426,7 +437,7 @@ def test_formula_charge(formula, expected):
 
 
 @pytest.mark.parametrize(
-    'formula, expected',
+    ('formula', 'expected'),
     [
         ('H2O', 1),
         ('H2', 2),
@@ -439,7 +450,7 @@ def test_formula_gcd(formula, expected):
 
 
 @pytest.mark.parametrize(
-    'formula, expected',
+    ('formula', 'expected'),
     [
         ('H', 1.007941),
         ('H+', 1.007392),
@@ -455,7 +466,7 @@ def test_formula_mass(formula, expected):
 
 
 @pytest.mark.parametrize(
-    'formula, expected',
+    ('formula', 'expected'),
     [
         ('C8H10N4O2', 194.08037),
     ],
@@ -466,7 +477,7 @@ def test_formula_monoisotopic_mass(formula, expected):
 
 
 @pytest.mark.parametrize(
-    'formula, expected',
+    ('formula', 'expected'),
     [
         ('C8H10N4O2', 194),
     ],
@@ -477,7 +488,7 @@ def test_formula_nominal_mass(formula, expected):
 
 
 @pytest.mark.parametrize(
-    'formula, expected',
+    ('formula', 'expected'),
     [
         ('H', 1.007941),
         ('H+', 1.007392),
@@ -490,7 +501,7 @@ def test_formula_mz(formula, expected):
 
 
 @pytest.mark.parametrize(
-    'formula, expected',
+    ('formula', 'expected'),
     [
         ('C', Isotope(12.0, 0.9893, 12)),
         ('13C', Isotope(13.003355, 0.0107, 13)),
@@ -553,7 +564,7 @@ def test_formula_composition():
     assert composition.astuple()[1] == item.astuple()
     assert composition.asdict()['12C'] == item.astuple()[1:]
 
-    composition = Formula('[12C][13C]C+').composition(False)
+    composition = Formula('[12C][13C]C+').composition(isotopic=False)
     assert '12C' not in str(composition)
     item = composition['e-']
     assert item.symbol == 'e-'
@@ -568,7 +579,7 @@ def test_formula_composition():
 
 
 @pytest.mark.parametrize(
-    'formula, mean, expected',
+    ('formula', 'mean', 'expected'),
     [
         ('D', 2.0141018, ((2, 2.0141018, 1.0, 100.0, 2.0141018),)),
         ('D2', 4.0282036, ((4, 4.0282036, 1.0, 100.0, 4.0282036),)),
@@ -628,7 +639,7 @@ def test_formula_spectrum(formula, mean, expected):
 
     assert spectrum.mean == pytest.approx(mean, abs=1e-6)
 
-    for (k, v), e in zip(spectrum.items(), expected):
+    for (k, v), e in zip(spectrum.items(), expected, strict=True):
         assert isinstance(v, SpectrumEntry)
         repr(v)
         str(v)
@@ -639,11 +650,11 @@ def test_formula_spectrum(formula, mean, expected):
         assert v.intensity == pytest.approx(e[3], abs=1e-6)
         assert v.mz == pytest.approx(e[4], abs=1e-6)
 
-    for (k, v), e in zip(spectrum.asdict().items(), expected):
+    for (k, v), e in zip(spectrum.asdict().items(), expected, strict=True):
         assert k == e[0]
         assert v == pytest.approx(e[1:], abs=1e-6)
 
-    for a, b in zip(spectrum.astuple(), expected):
+    for a, b in zip(spectrum.astuple(), expected, strict=True):
         assert a == pytest.approx(b, abs=1e-6)
 
     expected_peak = SpectrumEntry(*expected[0]).astuple()
@@ -697,7 +708,7 @@ def test_formula_sub():
 
 
 @pytest.mark.parametrize(
-    'numbers, expected',
+    ('numbers', 'expected'),
     [
         ([], 1),
         ([4], 4),
@@ -711,7 +722,7 @@ def test_gcd(numbers, expected):
 
 
 @pytest.mark.parametrize(
-    'value, digits, expected',
+    ('value', 'digits', 'expected'),
     [
         (0.0, 5, 3),
         (-0.12345678, 5, 2),
@@ -726,7 +737,7 @@ def test_precision_digits(value, digits, expected):
 
 
 @pytest.mark.parametrize(
-    'value, charge, expected',
+    ('value', 'charge', 'expected'),
     [
         (1.0, -2, 0.5),
         (1.0, 1, 1.0),
@@ -739,7 +750,7 @@ def test_mass_charge_ratio(value, charge, expected):
 
 
 @pytest.mark.parametrize(
-    'formula, expected',
+    ('formula', 'expected'),
     [
         ('Formula', ('Formula', 0)),
         ('Formula+', ('Formula', 1)),
@@ -763,7 +774,7 @@ def test_split_charge(formula, expected):
 
 
 @pytest.mark.parametrize(
-    'formula, kwargs, expected',
+    ('formula', 'kwargs', 'expected'),
     [
         ('Valohp', {}, '(C5H8NO2)'),
         ('Valohp', {'parse_groups': False}, 'Valohp'),
@@ -801,7 +812,7 @@ def test_from_string_error():
 
 
 @pytest.mark.parametrize(
-    'formula, kwargs, expected',
+    ('formula', 'kwargs', 'expected'),
     [
         ({}, {}, ''),
         (
@@ -839,7 +850,7 @@ def test_from_elements(formula, kwargs, expected):
 
 
 @pytest.mark.parametrize(
-    'formula, kwargs, expected',
+    ('formula', 'kwargs', 'expected'),
     [
         ({}, {}, ''),
         ({'H': 0.5}, {'maxcount': 2, 'precision': 1.0}, 'H'),
@@ -862,7 +873,7 @@ def test_from_fractions_error():
 
 
 @pytest.mark.parametrize(
-    'sequence, groups, expected',
+    ('sequence', 'groups', 'expected'),
     [
         ('A', {'A': 'B'}, '(B)'),
         ('AA', {'A': 'B'}, '(B)2'),
@@ -874,7 +885,7 @@ def test_from_sequence(sequence, groups, expected):
 
 
 @pytest.mark.parametrize(
-    'sequence, expected',
+    ('sequence', 'expected'),
     [
         ('GG', '((C2H3NO)2H2O)'),
         (
@@ -891,7 +902,7 @@ def test_from_peptide(sequence, expected):
 
 
 @pytest.mark.parametrize(
-    'sequence, dtype, expected',
+    ('sequence', 'dtype', 'expected'),
     [
         ('AC', 'ssdna', '((C10H12N5O5P)(C9H12N3O6P)H2O)'),
         ('AU', 'dsrna', '((C10H12N5O6P)2(C9H11N2O8P)2(H2O)2)'),
@@ -913,7 +924,7 @@ def test_from_oligo(sequence, dtype, expected):
 
 
 @pytest.mark.parametrize(
-    'formula, expected',
+    ('formula', 'expected'),
     [
         (('H', 'C', 'O'), ('C', 'H', 'O')),
         (('O', 'H'), ('H', 'O')),
@@ -926,7 +937,7 @@ def test_hill_sorted(formula, expected):
 
 
 @pytest.mark.parametrize(
-    'args, expected',
+    ('args', 'expected'),
     [
         ((0,), 'Formula'),
         ((1,), '[Formula]+'),
@@ -940,7 +951,7 @@ def test_join_charge(args, expected):
 
 
 @pytest.mark.parametrize(
-    'args, expected',
+    ('args', 'expected'),
     [
         ((0,), '0'),
         ((1,), '+'),
@@ -964,7 +975,7 @@ def test_elements():
     for e in ELEMENTS:
         assert isinstance(e, Element)
         e.validate()
-        eval(repr(e))
+        eval(repr(e))  # noqa: S307
 
 
 def test_analyze():
