@@ -8,5 +8,6 @@ target-version = ["py311", "py312", "py313", "py314"]
 skip-string-normalization = true
 
 [tool.isort]
+known_first_party = ["molmass"]
 profile = "black"
 line_length = 79
