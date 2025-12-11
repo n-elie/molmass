@@ -44,7 +44,7 @@ of the chemical elements.
 
 :Author: `Christoph Gohlke <https://www.cgohlke.com>`_
 :License: BSD-3-Clause
-:Version: 2025.11.11
+:Version: 2025.12.12
 :DOI: `10.5281/zenodo.7135495 <https://doi.org/10.5281/zenodo.7135495>`_
 
 Quickstart
@@ -76,13 +76,17 @@ Requirements
 This revision was tested with the following requirements and dependencies
 (other versions may work):
 
-- `CPython <https://www.python.org>`_ 3.11.9, 3.12.10, 3.13.9, 3.14.0
+- `CPython <https://www.python.org>`_ 3.11.9, 3.12.10, 3.13.11 3.14.2
 - `Flask <https://pypi.org/project/Flask/>`_ 3.1.2 (optional)
 - `Pandas <https://pypi.org/project/pandas/>`_ 2.3.3 (optional)
 - `wxPython <https://pypi.org/project/wxPython/>`_ 4.2.4 (optional)
 
 Revisions
 ---------
+
+2025.12.12
+
+- Make boolean arguments keyword-only (breaking).
 
 2025.11.11
 
@@ -274,16 +278,21 @@ Element(
 
 from __future__ import annotations
 
-__version__ = '2025.11.11'
+__version__ = '2025.12.12'
 
 __all__ = [
-    '__version__',
+    'AMINOACIDS',
+    'DEOXYNUCLEOTIDES',
+    'GROUPS',
+    'NUCLEOTIDES',
+    'PREPROCESSORS',
     'Composition',
     'CompositionItem',
     'Formula',
     'FormulaError',
     'Spectrum',
     'SpectrumEntry',
+    '__version__',
     'analyze',
     'format_charge',
     'from_elements',
@@ -297,11 +306,6 @@ __all__ = [
     'main',
     'mass_charge_ratio',
     'split_charge',
-    'AMINOACIDS',
-    'DEOXYNUCLEOTIDES',
-    'GROUPS',
-    'NUCLEOTIDES',
-    'PREPROCESSORS',
 ]
 
 import copy
@@ -523,10 +527,10 @@ class Formula:
         self._formula = from_string(
             formula,
             groups,
-            parse_groups,
-            parse_oligos,
-            parse_fractions,
-            parse_arithmetic,
+            parse_groups=parse_groups,
+            parse_oligos=parse_oligos,
+            parse_fractions=parse_fractions,
+            parse_arithmetic=parse_arithmetic,
         )
         self._formula_nocharge, self._charge = split_charge(self._formula)
         if not allow_empty and not self._formula_nocharge:
@@ -829,7 +833,7 @@ class Formula:
                 result.abundance *= isotope.abundance**count
         return result
 
-    def composition(self, isotopic: bool = True) -> Composition:
+    def composition(self, *, isotopic: bool = True) -> Composition:
         """Return elemental composition.
 
         Parameters:
@@ -843,7 +847,7 @@ class Formula:
             12C          1      12.000000     32.4201
             13C          1      13.003355     35.1308
 
-            >>> print(Formula('[12C][13C]C').composition(False))
+            >>> print(Formula('[12C][13C]C').composition(isotopic=False))
             Element  Count  Relative mass  Fraction %
             C            3      37.014095    100.0000
 
@@ -953,7 +957,7 @@ class Formula:
                 if massnumber:
                     # specific isotope
                     iso = ele.isotopes[massnumber]
-                    for key in reversed(sorted(spectrum)):
+                    for key in sorted(spectrum, reverse=True):
                         t = spectrum[key]
                         del spectrum[key]
                         if t[1] < min_fraction:
@@ -971,7 +975,7 @@ class Formula:
                     # mixture of isotopes
                     isotopes = ele.isotopes.values()
                     for _ in range(count):
-                        for key in reversed(sorted(spectrum)):
+                        for key in sorted(spectrum, reverse=True):
                             t = spectrum[key]
                             del spectrum[key]
                             if t[1] < min_fraction:
@@ -1190,12 +1194,15 @@ class Composition:
         return tuple(value.astuple() for value in self._items.values())
 
     def keys(self) -> Iterator[str]:
+        """Return iterator of symbols."""
         return iter(self._items.keys())
 
     def values(self) -> Iterator[CompositionItem]:
+        """Return iterator of CompositionItems."""
         return iter(self._items.values())
 
     def items(self) -> Iterator[tuple[str, CompositionItem]]:
+        """Return iterator of (symbol, CompositionItem) pairs."""
         return iter(self._items.items())
 
     def __getitem__(self, key: str) -> CompositionItem:
@@ -1216,14 +1223,16 @@ class Composition:
         if len(self) == 0:
             return ''
         precision = precision_digits(self.total.mass, 9)
-        result = ['Element  Count  Relative mass  Fraction %']
-        for item in self._items.values():
-            result.append(
+        result = [
+            'Element  Count  Relative mass  Fraction %',
+            *(
                 f'{item.symbol:<7s}'
                 f'  {item.count:5}'
                 f'  {item.mass:13.{precision}f}'
                 f'  {item.fraction * 100:10.4f}'
-            )
+                for item in self._items.values()
+            ),
+        ]
         return '\n'.join(result)
 
 
@@ -1383,12 +1392,15 @@ class Spectrum:
         return tuple(value.astuple() for value in self._spectrum.values())
 
     def keys(self) -> Iterator[int]:
+        """Return iterator of massnumbers."""
         return iter(self._spectrum.keys())
 
     def values(self) -> Iterator[SpectrumEntry]:
+        """Return iterator of SpectrumEntry objects."""
         return iter(self._spectrum.values())
 
     def items(self) -> Iterator[tuple[int, SpectrumEntry]]:
+        """Return iterator of (massnumber, SpectrumEntry) pairs."""
         return iter(self._spectrum.items())
 
     def __getitem__(self, key: int) -> SpectrumEntry:
@@ -1404,7 +1416,7 @@ class Spectrum:
         charge = f', {self._charge}' if self._charge != 0 else ''
         if len(self._spectrum) == 0:
             return f'Spectrum({{}}{charge})'
-        item = list(list(self._spectrum.values())[0].astuple())
+        item = list(next(iter(self._spectrum.values())).astuple())
         return '<Spectrum({' + f'{item[0]!r}: {item!r}, ...' + '}{charge})>'
 
     def __str__(self) -> str:
@@ -1485,6 +1497,7 @@ def from_string(
     formula: str,
     /,
     groups: dict[str, str] | None = None,
+    *,
     parse_groups: bool = True,
     parse_oligos: bool = True,
     parse_fractions: bool = True,
@@ -1561,7 +1574,7 @@ def from_string(
         if groups is None:
             groups = GROUPS
         if groups:
-            for grp in reversed(sorted(groups)):
+            for grp in sorted(groups, reverse=True):
                 formula = formula.replace(grp, f'({groups[grp]})')
 
     if parse_fractions and ':' in formula and ',' in formula:
@@ -1667,11 +1680,10 @@ def from_elements(
                     formula.append(fmt[2].format(massnumber, symbol))
                 else:
                     formula.append(fmt[3].format(massnumber, symbol, count))
+            elif count == 1:
+                formula.append(fmt[0].format(symbol))
             else:
-                if count == 1:
-                    formula.append(fmt[0].format(symbol))
-                else:
-                    formula.append(fmt[1].format(symbol, count))
+                formula.append(fmt[1].format(symbol, count))
     return join_charge(''.join(formula), charge // divisor)
 
 
@@ -1705,7 +1717,8 @@ def from_fractions(
     # divide normalized fractions by element/isotope mass
     numbers = {}
     sumfractions = sum(fractions.values())
-    for symbol, fraction in fractions.items():
+    for items in fractions.items():
+        symbol, fraction = items
         if symbol == 'D':  # Deuterium
             symbol = '2H'
         if symbol[0].isupper():
@@ -1749,7 +1762,7 @@ def from_fractions(
 
     formula = []
     for symbol, number in sorted(numbers.items()):
-        count = int(round(factor * number))
+        count = round(factor * number)
         if count > 1:
             formula.append(f'{symbol}{count}')
         else:
@@ -1776,7 +1789,7 @@ def from_sequence(sequence: str, groups: dict[str, str], /) -> str:
 
     """
     sequence, charge = split_charge(sequence)
-    counts = {key: 0 for key in groups}
+    counts = dict.fromkeys(groups, 0)
     for item in sequence:
         counts[item] += 1
     formula = []
@@ -1957,15 +1970,14 @@ def precision_digits(f: float, width: int, /) -> int:
 
     """
     try:
-        precision = math.log(abs(f), 10)
+        precision = math.log10(abs(f))
     except ValueError:
         # math domain error
         precision = 0.0
     precision = max(precision, 0)
-    precision = width - int(math.floor(precision))
+    precision = width - math.floor(precision)
     precision -= 3 if f < 0 else 2  # sign and decimal point
-    precision = max(precision, 1)
-    return precision
+    return max(precision, 1)
 
 
 def split_charge(formula: str, /) -> tuple[str, int]:
@@ -2352,11 +2364,7 @@ def main(argv: list[str] | None = None, /) -> int:
             from .web import main as web_main
         except ImportError:
             from web import main as web_main  # type: ignore[no-redef]
-
-        if formula_list:
-            form = {'q': ''.join(formula_list)}
-        else:
-            form = None
+        form = {'q': ''.join(formula_list)} if formula_list else None
 
         return web_main(
             url=settings.url, open_browser=not settings.nobrowser, form=form
@@ -2369,9 +2377,9 @@ def main(argv: list[str] | None = None, /) -> int:
     try:
         results = analyze(formula)
     except Exception as exc:
-        print('\nError: \n  ', exc, sep='')
-        raise exc
-    print('\n', results, sep='')
+        print('\nError: \n  ', exc, sep='')  # noqa: T201
+        raise
+    print('\n', results, sep='')  # noqa: T201
 
     return 0
 
