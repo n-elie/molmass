@@ -1,6 +1,6 @@
 # elements_gui.py
 
-# Copyright (c) 2005-2025, Christoph Gohlke
+# Copyright (c) 2005-2026, Christoph Gohlke
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,7 @@ Run the application::
 
 from __future__ import annotations
 
+import contextlib
 import io
 import math
 import os
@@ -61,10 +62,8 @@ class MainApp(wx.App):
     website = 'https://www.cgohlke.com'
     copyright = 'Christoph Gohlke'
     icon = 'icon.png'
-    try:
+    with contextlib.suppress(Exception):
         icon = os.path.join(os.path.dirname(__file__), icon)
-    except Exception:  # noqa: S110
-        pass
 
     def OnInit(self):
         wx.LogNull()
@@ -130,7 +129,7 @@ class MainFrame(wx.Frame):
 
         # create panels and controls
         self.notebook = wx.Notebook(self, -1, style=0)
-        self.description = DecriptionPanel(self.notebook, -1)
+        self.description = DescriptionPanel(self.notebook, -1)
         self.details = DetailsPanel(self.notebook, -1)
         self.table = PeriodicPanel(self, -1)
         self.disclose = DisclosureCtrl(self.table, -1, '')
@@ -780,7 +779,7 @@ class DetailsPanel(wx.Panel):
         evt.Skip()
 
 
-class DecriptionPanel(wx.Panel):
+class DescriptionPanel(wx.Panel):
     """Element description panel."""
 
     def __init__(self, *args, **kwds):
