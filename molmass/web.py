@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # molmass/web.py
 
-# Copyright (c) 2005-2025, Christoph Gohlke
+# Copyright (c) 2005-2026, Christoph Gohlke
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -540,7 +540,8 @@ def cgi(url: str, *, open_browser: bool = True, debug: bool = True) -> int:
             webbrowser(url)
         urlp = urlparse(url)
         if urlp.hostname is None or urlp.port is None:
-            raise ValueError(f'invalid URL {url!r}')
+            msg = f'invalid URL {url!r}'
+            raise ValueError(msg)
         HTTPServer(
             (urlp.hostname, urlp.port), CGIHTTPRequestHandler
         ).serve_forever()
@@ -580,7 +581,8 @@ def main(
 
     urlp = urlparse(url)
     if urlp.hostname is None or urlp.port is None:
-        raise ValueError(f'invalid URL {url!r}')
+        msg = f'invalid URL {url!r}'
+        raise ValueError(msg)
 
     app = Flask(__name__)
 
