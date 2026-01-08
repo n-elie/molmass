@@ -1,6 +1,6 @@
 # molmass/elements.py
 
-# Copyright (c) 2005-2025, Christoph Gohlke
+# Copyright (c) 2005-2026, Christoph Gohlke
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,7 @@ Data sources:
 
 from __future__ import annotations
 
-__version__ = '2025.9.4'
+__version__ = '2026.1.8'
 
 __all__ = [
     'ELECTRON',
@@ -198,29 +198,30 @@ class Element:
     def validate(self) -> None:
         """Check consistency of data. Raise ValueError on failure."""
         if self.period not in PERIODS:
-            raise ValueError(f'{self.symbol} - invalid period: {self.period}')
+            msg = f'{self.symbol} - invalid period: {self.period}'
+            raise ValueError(msg)
         if self.group not in GROUPS:
-            raise ValueError(f'{self.symbol} - invalid group: {self.group}')
+            msg = f'{self.symbol} - invalid group: {self.group}'
+            raise ValueError(msg)
         if self.block not in BLOCKS:
-            raise ValueError(f'{self.symbol} - invalid block: {self.block}')
+            msg = f'{self.symbol} - invalid block: {self.block}'
+            raise ValueError(msg)
         if self.series not in SERIES:
-            raise ValueError(f'{self.symbol} - invalid series: {self.series}')
+            msg = f'{self.symbol} - invalid series: {self.series}'
+            raise ValueError(msg)
 
         if self.number != self.protons:
-            raise ValueError(
-                f'{self.symbol} - atomic number must equal proton number'
-            )
+            msg = f'{self.symbol} - atomic number must equal proton number'
+            raise ValueError(msg)
         if self.protons != sum(self.eleshells):
-            raise ValueError(
-                f'{self.symbol} - number of protons must equal electrons'
-            )
+            msg = f'{self.symbol} - number of protons must equal electrons'
+            raise ValueError(msg)
         if len(self.ionenergy) > 1:
             ionev_ = self.ionenergy[0]
             for ionev in self.ionenergy[1:]:
                 if ionev <= ionev_:
-                    raise ValueError(
-                        f'{self.symbol} - ionenergy not increasing'
-                    )
+                    msg = f'{self.symbol} - ionenergy not increasing'
+                    raise ValueError(msg)
                 ionev_ = ionev
 
         mass = 0.0
@@ -229,14 +230,14 @@ class Element:
             mass += iso.abundance * iso.mass
             frac += iso.abundance
         if abs(mass - self.mass) > 0.03:
-            raise ValueError(
+            msg = (
                 f'{self.symbol} - average of isotope masses '
                 f'({mass:.4f}) != mass ({self.mass:.4f})'
             )
+            raise ValueError(msg)
         if abs(frac - 1.0) > 1e-9:
-            raise ValueError(
-                f'{self.symbol} - sum of isotope abundances != 1.0'
-            )
+            msg = f'{self.symbol} - sum of isotope abundances != 1.0'
+            raise ValueError(msg)
 
     def __repr__(self) -> str:
         ionenergy_list = []
@@ -344,7 +345,8 @@ class Elements:
         self._dict = {}
         for element in elements:
             if element.number > len(self._list) + 1:
-                raise ValueError('Elements must be added in order')
+                msg = 'Elements must be added in order'
+                raise ValueError(msg)
             if element.number <= len(self._list):
                 self._list[element.number - 1] = element
             else:
