@@ -1,6 +1,6 @@
 # molmass.py
 
-# Copyright (c) 1990-2025, Christoph Gohlke
+# Copyright (c) 1990-2026, Christoph Gohlke
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -44,7 +44,7 @@ of the chemical elements.
 
 :Author: `Christoph Gohlke <https://www.cgohlke.com>`_
 :License: BSD-3-Clause
-:Version: 2025.12.12
+:Version: 2026.1.8
 :DOI: `10.5281/zenodo.7135495 <https://doi.org/10.5281/zenodo.7135495>`_
 
 Quickstart
@@ -76,13 +76,17 @@ Requirements
 This revision was tested with the following requirements and dependencies
 (other versions may work):
 
-- `CPython <https://www.python.org>`_ 3.11.9, 3.12.10, 3.13.11 3.14.2
+- `CPython <https://www.python.org>`_ 3.11.9, 3.12.10, 3.13.11, 3.14.2
 - `Flask <https://pypi.org/project/Flask/>`_ 3.1.2 (optional)
 - `Pandas <https://pypi.org/project/pandas/>`_ 2.3.3 (optional)
 - `wxPython <https://pypi.org/project/wxPython/>`_ 4.2.4 (optional)
 
 Revisions
 ---------
+
+2026.1.8
+
+- Improve code quality.
 
 2025.12.12
 
@@ -107,89 +111,9 @@ Revisions
 
 2024.10.25
 
-- Fix composition of formula with multiple isotopes of same element (#16).
+- …
 
-2024.5.24
-
-- Fix docstring examples not correctly rendered on GitHub.
-
-2024.5.10
-
-- Add options to disable parsing groups, oligos, fractions, arithmetic (#14).
-- Add Formula.expanded property.
-
-2023.8.30
-
-- Fix linting issues.
-- Add py.typed marker.
-- Drop support for Python 3.8.
-
-2023.4.10
-
-- Support rdkit-style ionic charges (#11, #12).
-- Enable multiplication without addition in from_string.
-
-2022.12.9
-
-- Fix split_charge formula with trailing ]] (#11).
-
-2022.10.18
-
-- Several breaking changes.
-- Add experimental support for ion charges (#5).
-- Change Element, Isotope, and Particle to dataclass (breaking).
-- Change types of Spectrum and Composition (breaking).
-- Add functions to export Spectrum and Composition as Pandas DataFrames.
-- Replace lazyattr with functools.cached_property.
-- Rename molmass_web to web (breaking).
-- Change output of web application (breaking).
-- Run web application using Flask if installed.
-- Add options to specify URL of web application and not opening web browser.
-- Convert to Google style docstrings.
-- Add type hints.
-- Drop support for Python 3.7.
-
-2021.6.18
-
-- Add Particle types to elements (#5).
-- Fix molmass_web failure on WSL2 (#9).
-- Fix elements_gui layout issue.
-- Drop support for Python 3.6.
-
-2020.6.10
-
-- Fix elements_gui symbol size on WSL2.
-- Support wxPython 4.1.
-
-2020.1.1
-
-- Update elements atomic weights and isotopic compositions from NIST.
-- Move element descriptions into separate module.
-- Drop support for Python 2.7 and 3.5.
-
-2018.8.15
-
-- Move modules into molmass package.
-
-2018.5.29
-
-- Add option to start web interface from console.
-- Separate styles from content and use CSS flex layout in molmass_web.
-
-2018.5.25
-
-- Style and docstring fixes.
-- Make from_fractions output deterministic.
-- Accept Flask request.args in molmass_web.
-- Style and template changes in molmass_web.
-
-2016.2.25
-
-- Fix some elements ionization energies.
-
-2005.x.x
-
-- Initial release.
+Refer to the CHANGES file for older revisions.
 
 Examples
 --------
@@ -278,7 +202,7 @@ Element(
 
 from __future__ import annotations
 
-__version__ = '2025.12.12'
+__version__ = '2026.1.8'
 
 __all__ = [
     'AMINOACIDS',
@@ -534,7 +458,8 @@ class Formula:
         )
         self._formula_nocharge, self._charge = split_charge(self._formula)
         if not allow_empty and not self._formula_nocharge:
-            raise FormulaError('empty formula', formula, 0)
+            msg = 'empty formula'
+            raise FormulaError(msg, formula, 0)
 
     @cached_property
     def _elements(self) -> dict[str, dict[int, int]]:
@@ -561,9 +486,8 @@ class Formula:
         validchars = set('([{<123456789ABCDEFGHIKLMNOPRSTUVWXYZ')
 
         if formula[0] not in validchars:
-            raise FormulaError(
-                f'unexpected character {formula[0]!r}', formula, 0
-            )
+            msg = f'unexpected character {formula[0]!r}'
+            raise FormulaError(msg, formula, 0)
 
         validchars |= set(']})>0abcdefghiklmnoprstuy')
 
@@ -577,15 +501,13 @@ class Formula:
             i -= 1
             char = formula[i]
             if char not in validchars:
-                raise FormulaError(
-                    f'unexpected character {char!r}', formula, i
-                )
+                msg = f'unexpected character {char!r}'
+                raise FormulaError(msg, formula, i)
             if char in '([{<':
                 level -= 1
                 if level < 0 or num != 0:
-                    raise FormulaError(
-                        "missing closing parenthesis ')]}>'", formula, i
-                    )
+                    msg = "missing closing parenthesis ')]}>'"
+                    raise FormulaError(msg, formula, i)
             elif char in ')]}>':
                 if num == 0:
                     num = 1
@@ -600,19 +522,20 @@ class Formula:
                     i -= 1
                 num = int(formula[i : j + 1])
                 if num == 0:
-                    raise FormulaError('count is zero', formula, i)
+                    msg = 'count is zero'
+                    raise FormulaError(msg, formula, i)
             elif char.islower():
                 if not formula[i - 1].isupper():
-                    raise FormulaError(
-                        f'unexpected character {char!r}', formula, i
-                    )
+                    msg = f'unexpected character {char!r}'
+                    raise FormulaError(msg, formula, i)
                 ele = char
             elif char.isupper():
                 ele = char + ele
                 if num == 0:
                     num = 1
                 if ele not in ELEMENTS:
-                    raise FormulaError(f'unknown symbol {ele!r}', formula, i)
+                    msg = f'unknown symbol {ele!r}'
+                    raise FormulaError(msg, formula, i)
                 iso_str = ''
                 j = i
                 while i and formula[i - 1].isdigit():
@@ -624,9 +547,8 @@ class Formula:
                 if iso_str:
                     iso = int(iso_str)
                     if iso not in ELEMENTS[ele].isotopes:
-                        raise FormulaError(
-                            f"unknown isotope '{iso}{ele}'", formula, i
-                        )
+                        msg = f"unknown isotope '{iso}{ele}'"
+                        raise FormulaError(msg, formula, i)
                 else:
                     iso = 0
                 number = num * counts[level]
@@ -642,15 +564,16 @@ class Formula:
                 num = 0
 
         if num != 0:
-            raise FormulaError('number preceding formula', formula, 0)
+            msg = 'number preceding formula'
+            raise FormulaError(msg, formula, 0)
 
         if level != 0:
-            raise FormulaError(
-                "missing opening parenthesis '([{<'", formula, 0
-            )
+            msg = "missing opening parenthesis '([{<'"
+            raise FormulaError(msg, formula, 0)
 
         if not elements:
-            raise FormulaError('invalid formula', formula, 0)
+            msg = 'invalid formula'
+            raise FormulaError(msg, formula, 0)
 
         return elements
 
@@ -1017,7 +940,8 @@ class Formula:
             not isinstance(number, int)  # type: ignore[redundant-expr]
             or number < 1
         ):
-            raise TypeError('can only multiply with positive integer')
+            msg = 'can only multiply with positive integer'
+            raise TypeError(msg)
         return Formula(
             join_charge(
                 f'({self._formula_nocharge}){number}', self._charge * number
@@ -1041,7 +965,8 @@ class Formula:
 
         """
         if not isinstance(other, Formula):
-            raise TypeError('can only add Formula instance')
+            msg = 'can only add Formula instance'  # type: ignore[unreachable]
+            raise TypeError(msg)
         return Formula(
             join_charge(
                 f'({self._formula_nocharge})({other._formula_nocharge})',
@@ -1057,22 +982,24 @@ class Formula:
 
         """
         if not isinstance(other, Formula):
-            raise TypeError('can only subtract Formula instance')
+            msg = (  # type: ignore[unreachable]
+                'can only subtract Formula instance'
+            )
+            raise TypeError(msg)
         _elements = copy.deepcopy(self._elements)
         for symbol, isotopes in other._elements.items():
             if symbol not in _elements:
-                raise ValueError(f'element {symbol} not in {self}')
+                msg = f'element {symbol} not in {self}'
+                raise ValueError(msg)
             element = _elements[symbol]
             for massnumber, count in isotopes.items():
                 if massnumber not in element:
-                    raise ValueError(
-                        f'element {massnumber}{symbol} not in {self}'
-                    )
+                    msg = f'element {massnumber}{symbol} not in {self}'
+                    raise ValueError(msg)
                 element[massnumber] -= count
                 if element[massnumber] < 0:
-                    raise ValueError(
-                        f'negative number of element {massnumber}{symbol}'
-                    )
+                    msg = f'negative number of element {massnumber}{symbol}'
+                    raise ValueError(msg)
                 if element[massnumber] == 0:
                     del element[massnumber]
                 if not element:
@@ -1322,7 +1249,8 @@ class Spectrum:
 
         """
         if not self._spectrum:
-            raise ValueError('spectrum is empty')
+            msg = 'spectrum is empty'
+            raise ValueError(msg)
         return max(self._spectrum.values(), key=lambda x: x.fraction)
 
     @cached_property
@@ -1346,7 +1274,8 @@ class Spectrum:
 
         """
         if not self._spectrum:
-            raise ValueError('spectrum is empty')
+            msg = 'spectrum is empty'
+            raise ValueError(msg)
         return min(self._spectrum.keys()), max(self._spectrum.keys())
 
     def dataframe(self) -> pandas.DataFrame:
@@ -1568,7 +1497,8 @@ def from_string(
     try:
         formula = formula.strip().replace(' ', '')
     except AttributeError as exc:
-        raise TypeError('formula must be a string') from exc
+        msg = 'formula must be a string'
+        raise TypeError(msg) from exc
 
     if parse_groups:
         if groups is None:
@@ -1584,9 +1514,8 @@ def from_string(
                 items = item.split(':')
                 fractions[items[0].strip()] = float(items[1].strip())
         except Exception as exc:
-            raise FormulaError(
-                'invalid list of mass fractions', formula
-            ) from exc
+            msg = 'invalid list of mass fractions'
+            raise FormulaError(msg, formula) from exc
         return from_fractions(fractions)
 
     if parse_oligos and len(formula) > 1:
@@ -1616,14 +1545,12 @@ def from_string(
             # invalid lower case after operator
             m = _ARITHMETIC_INVALID_PATTERN.search(formula)
             if m:
-                raise FormulaError(
-                    'invalid symbol', formula, formula.index(m[0]) + 1
-                )
+                msg = 'invalid symbol'
+                raise FormulaError(msg, formula, formula.index(m[0]) + 1)
             formula = formula.replace('+', '')
         if '-' in formula:
-            raise FormulaError(
-                'subtraction not allowed', formula, formula.index('-')
-            )
+            msg = 'subtraction not allowed'
+            raise FormulaError(msg, formula, formula.index('-'))
 
     if charge != 0:
         formula = f'[{formula}]{format_charge(charge)}'
@@ -1725,7 +1652,8 @@ def from_fractions(
             try:
                 mass = ELEMENTS[symbol].mass
             except KeyError as exc:
-                raise FormulaError(f'unknown element {symbol!r}') from exc
+                msg = f'unknown element {symbol!r}'
+                raise FormulaError(msg) from exc
         else:
             if symbol.startswith('['):
                 symbol = symbol[1:-1]
@@ -1737,9 +1665,8 @@ def from_fractions(
             try:
                 mass = ELEMENTS[symbol].isotopes[massnum].mass
             except KeyError as exc:
-                raise FormulaError(
-                    f"unknown isotope '[{massnum}{symbol}]'"
-                ) from exc
+                msg = f"unknown isotope '[{massnum}{symbol}]'"
+                raise FormulaError(msg) from exc
             symbol = f'[{massnum}{symbol}]'
         numbers[symbol] = fraction / (sumfractions * mass)
 
