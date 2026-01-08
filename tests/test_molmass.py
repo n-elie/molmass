@@ -1,6 +1,6 @@
 # test_molmass.py
 
-# Copyright (c) 1990-2025, Christoph Gohlke
+# Copyright (c) 1990-2026, Christoph Gohlke
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,9 +29,11 @@
 
 """Unittests for the molmass package.
 
-:Version: 2025.12.12
+:Version: 2026.1.8
 
 """
+
+import contextlib
 
 import pytest
 
@@ -1017,10 +1019,8 @@ def test_main(capsys):
     result = capsys.readouterr().out
     assert 'Error: unknown symbol' in result
 
-    try:
+    with contextlib.suppress(SystemExit):
         assert main(['--help']) == 0
-    except SystemExit:
-        pass
     result = capsys.readouterr().out
     assert 'Usage: molmass [options] formula' in result
 
