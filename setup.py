@@ -12,7 +12,8 @@ def search(pattern: str, string: str, flags: int = 0) -> str:
     """Return first match of pattern in string."""
     match = re.search(pattern, string, flags)
     if match is None:
-        raise ValueError(f'{pattern!r} not found')
+        msg = f'{pattern=!r} not found'
+        raise ValueError(msg)
     return match.groups()[0]
 
 
@@ -67,6 +68,20 @@ if 'sdist' in sys.argv:
         fh.write('BSD-3-Clause license\n\n')
         fh.write(license)
 
+    revisions = search(
+        r'(?:\r\n|\r|\n){2}(Revisions.*)- …',
+        readme,
+        re.MULTILINE | re.DOTALL,
+    ).strip()
+
+    with open('CHANGES.rst', encoding='utf-8') as fh:
+        old = fh.read()
+
+    old = old.split(revisions.splitlines()[-1])[-1]
+    with open('CHANGES.rst', 'w', encoding='utf-8') as fh:
+        fh.write(revisions.strip())
+        fh.write(old)
+
 setup(
     name='molmass',
     version=version,
@@ -84,16 +99,17 @@ setup(
     },
     packages=['molmass'],
     package_data={'molmass': ['py.typed', 'icon.png']},
+    install_requires=[],
+    extras_require={
+        'all': ['Flask', 'pandas'],
+        'gui': ['wxPython>=4.0'],
+    },
     entry_points={
         'console_scripts': [
             'molmass = molmass.molmass:main',
             'molmass_web = molmass.web:main',
         ],
         'gui_scripts': ['elements_gui = molmass.elements_gui:main'],
-    },
-    extras_require={
-        'all': ['Flask', 'pandas'],
-        'gui': ['wxPython>=4.0'],
     },
     platforms=['any'],
     python_requires='>=3.11',
