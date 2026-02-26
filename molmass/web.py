@@ -39,10 +39,10 @@ Run the web application in a local web server::
 The application is run in a Flask built-in server, and a web browser is opened.
 
 If Flask is not installed, the application is run in a built-in CGI server.
-The cgi module is deprecated and slated for removal in Python 3.13.
+The cgi module was removed in Python 3.13.
 To run in CGI mode, this script must be made executable on UNIX systems::
 
-    chmod -x ./web.py
+    chmod +x ./web.py
 
 Do not run the built-in Flask or CGI servers in a production deployment.
 Instead, for example, create a Flask app and serve it on a production server::
@@ -80,63 +80,61 @@ except ImportError:
 
 DEBUG = False
 
-PAGE = """<!DOCTYPE html PUBLIC
-"-//W3C//DTD XHTML 1.1 plus MathML 2.0 plus SVG 1.1//EN"
-"http://www.w3.org/2002/04/xhtml-math-svg/xhtml-math-svg.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml"
-xmlns:mathml="http://www.w3.org/1998/Math/MathML"
-xmlns:svg="http://www.w3.org/2000/svg" xml:lang="en">
+PAGE = """<!DOCTYPE html>
+<html lang="en">
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<style type="text/css">
-html {{}}
-body {{min-width: 576px, margin: 0.5em; padding: 0.25em 0.5em 0 0.5em}}
-div.header {{display: flex; flex-wrap: wrap; align-items: baseline;
-  padding-bottom: 0.4em}}
-div.header p a {{text-decoration: none; color: #000000}}
-div.header p a:hover {{text-decoration: underline; color: #E00000}}
-h1 {{margin: 0; padding: 0 0.5em 0 0}}
-h1 a {{text-decoration: none; color: #000000}}
-h2.hidden {{display: none}}
+<meta charset="utf-8">
+<meta name="generator" content="molmass.py">
+<meta name="robots" content="noarchive">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body {{min-width: 576px; margin: 0.5em; padding: 0.25em 0.5em 0 0.5em;}}
+header {{display: flex; flex-wrap: wrap; align-items: baseline;
+ padding-bottom: 0.4em;}}
+header p a {{text-decoration: none; color: #000000;}}
+header p a:hover {{text-decoration: underline; color: #E00000;}}
+h1 {{margin: 0; padding: 0 0.5em 0 0;}}
+h1 a {{text-decoration: none; color: #000000;}}
+h2.hidden {{display: none;}}
 form {{display: flex; flex-wrap: nowrap; background-color: #eeeeee;
-  border: 1px solid #aaaaaa; padding: 1em}}
-input {{margin-left: 0.5em; min-width: 4.5em}}
-input[type=text] {{width: 100%}}
-div.formula {{flex: 1 1 100%; min-width: 2em; margin-right: 1em}}
-div.buttons {{white-space: nowrap}}
-table {{border-spacing: 0.6em 0.3em}}
+ border: 1px solid #aaaaaa; padding: 1em;}}
+input {{margin-left: 0.5em; min-width: 4.5em;}}
+input[type=text] {{width: 100%;}}
+div.formula {{flex: 1 1 100%; min-width: 2em; margin-right: 1em;}}
+div.buttons {{white-space: nowrap;}}
+table {{border-spacing: 0.6em 0.3em;}}
 table caption {{padding: 1em 0 0.5em 0; text-align: left;
-  font-weight: bold; font-size: larger}}
-table th {{text-align: left}}
-table.results th[scope=row] {{text-align: right}}
-table.table th[scope=row] {{font-weight: normal}}
-tr.spacer * {{padding-top: 0.6em}}
-a:hover {{text-decoration: underline; color: #E00000}}
+ font-weight: bold; font-size: larger;}}
+table th {{text-align: left;}}
+table.results th[scope=row] {{text-align: right;}}
+table.table th[scope=row] {{font-weight: normal;}}
+th.right {{text-align: right;}}
+td.right {{text-align: right;}}
+tr.spacer * {{padding-top: 0.6em;}}
+a:hover {{text-decoration: underline; color: #E00000;}}
 </style>{heads}
-<meta name="generator" content="molmass" />
-<meta name="robots" content="noarchive" />
-<meta name="format-detection" content="telephone=no" />
-<meta name="viewport" content="width=608px" />
 <title>Molecular Mass Calculator v{version}</title>
 </head>
 <body>
-<div class="header">
+<header>
 <h1>Molecular Mass Calculator</h1>
 <p>by <a href="https://www.cgohlke.com">Christoph Gohlke</a></p>
-</div>
-<form id="molmass" method="get" action="">
+</header>
+<main>
+<form id="molmass" method="get">
 <div><label for="q"><strong>Formula:</strong></label></div>
 <div class="formula">
-<input type="text" name="q" id="q" value="{formula}" />
+<input type="text" name="q" id="q" value="{formula}">
 </div>
 <div class="buttons">
-<input type="submit" id="a" value="Submit" />
-<input type="reset" value="Reset" onclick="window.location='{url}'"/>
+<input type="submit" id="a" value="Submit">
+<input type="reset" value="Reset" onclick="window.location='{url}'">
 </div>
 </form>
 <div class="content">
 {content}
 </div>
+</main>
 </body>
 </html>"""
 
@@ -157,11 +155,11 @@ Mass deficiency due to chemical bonding is not considered.
 </li>
 <li>Specific isotopes:
 <a href="?q=D2O" rel="nofollow">D2O</a> or
-<a href="?q=[30Si]3O2" rel="nofollow">[30Si]3O2</a>
+<a href="?q=%5B30Si%5D3O2" rel="nofollow">[30Si]3O2</a>
 </li>
 <li>Ion charges:
 <a href="?q=SO4_2-" rel="nofollow">SO4_2-</a> or
-<a href="?q=[AsO4]3-" rel="nofollow">[AsO4]3-</a>
+<a href="?q=%5BAsO4%5D3-" rel="nofollow">[AsO4]3-</a>
 </li>
 <li><a href="?q=groups" rel="nofollow">Abbreviations</a> of chemical groups:
 <a href="?q=EtOH" rel="nofollow">EtOH</a> or
@@ -172,7 +170,7 @@ Mass deficiency due to chemical bonding is not considered.
 <a href="?q=CuSO4.5H2O" rel="nofollow">CuSO4.5H2O</a>
 </li>
 <li>Relative element weights:
-<a href="?q=O: 0.26, 30Si: 0.74" rel="nofollow">O: 0.26, 30Si: 0.74</a>
+<a href="?q=O:%200.26,%2030Si:%200.74" rel="nofollow">O: 0.26, 30Si: 0.74</a>
 </li>
 <li>Nucleotide sequences:
 <a href="?q=CGCGAATTCGCG" rel="nofollow">CGCGAATTCGCG</a> or
@@ -282,12 +280,12 @@ def analyze(
         result.append('<table class="results"><caption></caption>')
         result.append(
             '<tr><th scope="row">Hill notation</th>'
-            f'<td colspan="2">{html(f.formula)}</td></tr>'
+            f'<td>{html(f.formula)}</td><td></td></tr>'
         )
         if f.formula != f.empirical:
             result.append(
                 f'<tr><th scope="row">Empirical formula</th>'
-                f'<td colspan="2">{html(f.empirical)}</td></tr>'
+                f'<td>{html(f.empirical)}</td><td></td></tr>'
             )
 
         prec = max(
@@ -300,13 +298,13 @@ def analyze(
 
         result.append(
             f'<tr class="spacer"><th scope="row">Nominal mass</th>'
-            f'<td>{f.nominal_mass}</td></tr>'
+            f'<td>{f.nominal_mass}</td><td></td></tr>'
         )
         if f.mass != f.isotope.mass:
             # formula is not an isotope
             result.append(
                 f'<tr><th scope="row">Average mass</th>'
-                f'<td>{f.mass:.{prec}f}</td></tr>'
+                f'<td>{f.mass:.{prec}f}</td><td></td></tr>'
             )
         result.append(
             f'<tr><th scope="row">Monoisotopic mass</th>'
@@ -321,11 +319,11 @@ def analyze(
             )
             result.append(
                 '<tr><th scope="row">Mean of distribution</th>'
-                f'<td>{spectrum.mean:.{prec}}</td></tr>'
+                f'<td>{spectrum.mean:.{prec}}</td><td></td></tr>'
             )
         result.append(
             '<tr class="spacer"><th scope="row">Number of atoms</th>'
-            f'<td>{f.atoms}</td></tr>'
+            f'<td>{f.atoms}</td><td></td></tr>'
         )
         result.append('</table>')
 
@@ -413,20 +411,18 @@ def isotopes() -> str:
     <caption>Isotopic Composition of the Elements</caption>
     <tr>
     <th scope="col">Element/Isotope</th>
-    <th scope="col" align="right">Relative mass</th>
-    <th scope="col" align="right">Abundance</th>
+    <th scope="col" class="right">Relative mass</th>
+    <th scope="col" class="right">Abundance</th>
     </tr>
     {rows}
-    </table>""".strip().replace(
-        '    ', ''
-    )
+    </table>""".strip().replace('    ', '')
 
     rows: list[str] = []
     for ele in ELEMENTS:
         rows.extend(
             (
                 f'<tr><td><a href="?q={ele.symbol}">{ele.name}</a></td>',
-                f'<td align="right">{ele.mass:12.8f}</td></tr>',
+                f'<td class="right">{ele.mass:12.8f}</td><td></td></tr>',
             )
         )
         for massnumber in sorted(ele.isotopes):
@@ -434,11 +430,11 @@ def isotopes() -> str:
             rows.extend(
                 (
                     '<tr>',
-                    '<td align="right">'
+                    '<td class="right">'
                     f'<a href="?q={massnumber}{ele.symbol}">'
                     f'<sup>{massnumber}</sup>{ele.symbol}</a></td>',
-                    f'<td align="right">{iso.mass:.8f}</td>',
-                    f'<td align="right">{iso.abundance * 100.:.8f}</td>',
+                    f'<td class="right">{iso.mass:.8f}</td>',
+                    f'<td class="right">{iso.abundance * 100.:.8f}</td>',
                     '</tr>',
                 )
             )
@@ -456,9 +452,7 @@ def groups() -> str:
     <th scope="col">Formula</th>
     </tr>
     {rows}
-    </table>""".strip().replace(
-        '    ', ''
-    )
+    </table>""".strip().replace('    ', '')
 
     result: list[str] = ['<!--h2>Abbreviations of chemical groups</h2-->']
     for group, title in (
