@@ -95,10 +95,11 @@ setup(
     project_urls={
         'Bug Tracker': 'https://github.com/cgohlke/molmass/issues',
         'Source Code': 'https://github.com/cgohlke/molmass',
-        # 'Documentation': 'https://',
+        'Documentation': 'https://www.cgohlke.com/docs/molmass/',
     },
     packages=['molmass'],
     package_data={'molmass': ['py.typed', 'icon.png']},
+    python_requires='>=3.12',
     install_requires=[],
     extras_require={
         'all': ['Flask', 'pandas'],
@@ -112,16 +113,15 @@ setup(
         'gui_scripts': ['elements_gui = molmass.elements_gui:main'],
     },
     platforms=['any'],
-    python_requires='>=3.11',
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Science/Research',
         'Intended Audience :: Developers',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3 :: Only',
-        'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: 3.12',
         'Programming Language :: Python :: 3.13',
         'Programming Language :: Python :: 3.14',
+        'Programming Language :: Python :: 3.15',
     ],
 )
