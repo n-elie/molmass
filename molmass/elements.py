@@ -45,7 +45,7 @@ Data sources:
 
 from __future__ import annotations
 
-__version__ = '2026.1.8'
+__version__ = '2026.6.9'
 
 __all__ = [
     'ELECTRON',
@@ -2152,8 +2152,7 @@ def sqlite_script() -> str:
         >>> con.close()
 
     """
-    sql = [
-        """
+    sql = ["""
         CREATE TABLE "period" (
             "number" TINYINT NOT NULL PRIMARY KEY,
             "label" CHAR NOT NULL UNIQUE,
@@ -2223,8 +2222,7 @@ def sqlite_script() -> str:
             "energy" REAL NOT NULL,
             PRIMARY KEY ("element", "number")
         );
-    """
-    ]
+    """]
 
     sql.extend(
         f"""INSERT INTO "period" VALUES ({key}, '{label}', NULL);"""
@@ -2241,11 +2239,8 @@ def sqlite_script() -> str:
         for data in BLOCKS.items()
     )
 
-    sql.extend(
-        f"""INSERT INTO "series" VALUES (
-        {series}, '{SERIES[series]}', ''\n);"""
-        for series in sorted(SERIES)
-    )
+    sql.extend(f"""INSERT INTO "series" VALUES (
+        {series}, '{SERIES[series]}', ''\n);""" for series in sorted(SERIES))
 
     for ele in ELEMENTS:
         descr = word_wrap(
@@ -2254,15 +2249,13 @@ def sqlite_script() -> str:
             indent=0,
             joinstr='\n ',
         )
-        sql.append(
-            f"""INSERT INTO "element" VALUES (
+        sql.append(f"""INSERT INTO "element" VALUES (
             {ele.number}, '{ele.symbol}', '{ele.name}', {ele.period},
             {ele.group}, '{ele.block}', {ele.series}, {ele.mass:.10f},
             {ele.eleneg:.4f}, {ele.covrad:.4f}, {ele.atmrad:.4f},
             {ele.vdwrad:.4f}, {ele.tboil:4f}, {ele.tmelt:.4f},
             {ele.density:.4f}, {ele.eleaffin:.8f}, '{ele.eleconfig}',
-            '{ele.oxistates}', '{descr}'\n);"""
-        )
+            '{ele.oxistates}', '{descr}'\n);""")
 
     sql.extend(
         f"""INSERT INTO "isotope" VALUES (
