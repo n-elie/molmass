@@ -29,7 +29,7 @@
 
 """Unittests for the molmass package.
 
-:Version: 2026.1.8
+:Version: 2026.6.9
 
 """
 
@@ -56,6 +56,7 @@ from molmass import (
     SpectrumEntry,
     __version__,
     analyze,
+    dilution,
     format_charge,
     from_elements,
     from_fractions,
@@ -306,6 +307,14 @@ def test_formulas_invalid(formula):
         _ = Formula(formula).empirical
 
 
+@pytest.mark.parametrize(('key', 'value'), GROUPS.items())
+def test_formula_groups(key, value):
+    """Test GROUPS is consistent and keys are not valid formulas."""
+    assert Formula(key).formula == value
+    with pytest.raises(FormulaError):
+        _ = Formula(key, parse_groups=False).empirical
+
+
 @pytest.mark.parametrize(
     ('formula', 'message', 'detail'),
     [
@@ -313,6 +322,7 @@ def test_formulas_invalid(formula):
         ('(H2O)2-H2O', 'subtraction not allowed', '(H2O)2-H2O\n......^'),
         ('[11C]', 'unknown isotope', '[11C]\n.^'),
         ('O: 0;26, 30Si: 0.74', 'invalid list of mass fractions', ''),
+        ('H^++', 'unexpected character', 'H^\n.^'),
     ],
 )
 def test_formula_error(formula, message, detail):
@@ -716,6 +726,26 @@ def test_formula_sub():
         ([4], 4),
         ([3, 6], 3),
         ([6, 7], 1),
+        # multiple numbers
+        ([12, 18, 24], 6),
+        ([10, 15, 20, 25], 5),
+        # sll same numbers
+        ([7, 7, 7], 7),
+        # large numbers
+        ([1000, 500], 500),
+        ([999, 1001], 1),
+        # powers of 2
+        ([16, 32, 64], 16),
+        ([8, 12, 16], 4),
+        # GCD is a larger prime
+        ([21, 35, 49], 7),
+        ([22, 33, 44], 11),
+        # mix of small and large
+        ([2, 1000], 2),
+        ([3, 300, 3000], 3),
+        # more coprime cases
+        ([13, 17], 1),
+        ([25, 49], 1),
     ],
 )
 def test_gcd(numbers, expected):
@@ -925,6 +955,12 @@ def test_from_oligo(sequence, dtype, expected):
     assert from_oligo(sequence, dtype) == expected
 
 
+def test_from_oligo_error():
+    """Test from_oligo function error."""
+    with pytest.raises(ValueError):
+        from_oligo('AUC', 'trna')
+
+
 @pytest.mark.parametrize(
     ('formula', 'expected'),
     [
@@ -970,6 +1006,213 @@ def test_join_charge(args, expected):
 def test_format_charge(args, expected):
     """Test format_charge function."""
     assert format_charge(*args) == expected
+
+
+@pytest.mark.parametrize(
+    ('formula', 'mass', 'unit', 'expected'),
+    [
+        ('NaCl', 58.44, 'g', 0.999955),
+        ('NaCl', 58.44, 'mg', 0.000999955),
+        ('H2O', 18.015, 'mg', 0.0009999166),
+        ('C6H12O6', 180.15, 'g', 0.999966),
+        ('H2SO4', 98.07, 'kg', 999.915),
+        ('HCl', 36.46, 'ug', 9.9998e-07),
+    ],
+)
+def test_moles(formula, mass, unit, expected):
+    """Test Formula.moles method."""
+    f = Formula(formula)
+    result = f.moles(mass, unit)
+    assert result == pytest.approx(expected, rel=1e-4)
+
+
+@pytest.mark.parametrize(
+    ('formula', 'moles', 'unit', 'expected'),
+    [
+        ('H2O', 1.0, 'g', 18.01528),
+        ('H2O', 1.0, 'mg', 18015.28),
+        ('NaCl', 0.5, 'g', 29.221335),
+        ('C6H12O6', 2.0, 'g', 360.3132),
+        ('H2SO4', 0.001, 'kg', 9.8078e-05),
+        ('HCl', 1.0, 'ug', 3.646084e07),
+    ],
+)
+def test_mass_from_moles(formula, moles, unit, expected):
+    """Test Formula.mass_from_moles method."""
+    f = Formula(formula)
+    result = f.mass_from_moles(moles, unit)
+    assert result == pytest.approx(expected, rel=1e-4)
+
+
+@pytest.mark.parametrize(
+    ('formula', 'mass', 'volume', 'mass_unit', 'volume_unit', 'expected'),
+    [
+        ('NaCl', 58.44, 1.0, 'g', 'L', 0.999955),
+        ('NaCl', 5.844, 100, 'g', 'mL', 0.999955),
+        ('C6H12O6', 18.0, 100, 'g', 'mL', 0.999133),
+        ('H2SO4', 98.07, 1.0, 'g', 'L', 0.999928),
+        ('HCl', 36.46, 500, 'mg', 'mL', 0.002),
+        ('NaCl', 58.44, 100, 'g', 'dL', 0.0999954),
+    ],
+)
+def test_molarity(formula, mass, volume, mass_unit, volume_unit, expected):
+    """Test Formula.molarity method."""
+    f = Formula(formula)
+    result = f.molarity(
+        mass, volume, mass_unit=mass_unit, volume_unit=volume_unit
+    )
+    assert result == pytest.approx(expected, rel=1e-4)
+
+
+@pytest.mark.parametrize(
+    ('formula', 'molarity', 'volume', 'mass_unit', 'volume_unit', 'expected'),
+    [
+        ('NaCl', 1.0, 1.0, 'g', 'L', 58.44267),
+        ('NaCl', 0.5, 250, 'g', 'mL', 7.305334),
+        ('NaCl', 0.5, 250, 'mg', 'mL', 7305.334),
+        ('C6H12O6', 1.0, 100, 'g', 'mL', 18.01566),
+        ('H2SO4', 2.0, 1.0, 'g', 'L', 196.15464),
+        ('HCl', 0.1, 500, 'mg', 'mL', 1822.926),
+    ],
+)
+def test_mass_for_molarity(
+    formula, molarity, volume, mass_unit, volume_unit, expected
+):
+    """Test Formula.mass_for_molarity method."""
+    f = Formula(formula)
+    result = f.mass_for_molarity(
+        molarity, volume, mass_unit=mass_unit, volume_unit=volume_unit
+    )
+    assert result == pytest.approx(expected, rel=1e-4)
+
+
+def test_concentration_edge_cases():
+    """Test edge cases for concentration methods."""
+    # empty formula (mass=0) should raise ValueError
+    empty = Formula('')
+
+    with pytest.raises(ValueError, match='zero mass'):
+        empty.moles(1.0)
+
+    with pytest.raises(ValueError, match='zero mass'):
+        empty.molarity(1.0, 1.0)
+
+    with pytest.raises(ValueError, match='zero mass'):
+        empty.ppm_to_molarity(1000)
+
+    # zero volume in molarity
+    f = Formula('H2O')
+    with pytest.raises(ValueError, match='volume must be non-zero'):
+        f.molarity(18.0, 0.0)
+
+    # zero density in molarity_to_ppm
+    with pytest.raises(ValueError, match='density must be non-zero'):
+        f.molarity_to_ppm(1.0, density=0.0)
+
+    # subtraction resulting in empty formula
+    result = Formula('H2O') - Formula('H2O')
+    assert result.mass == 0.0
+    with pytest.raises(ValueError, match='zero mass'):
+        result.moles(1.0)
+
+
+def test_from_fractions_edge_cases():
+    """Test edge cases for from_fractions function."""
+    # zero fractions
+    with pytest.raises(
+        FormulaError, match='sum of fractions must be positive'
+    ):
+        from_fractions({'H': 0.0, 'O': 0.0})
+
+    # negative fractions that sum to zero or negative
+    with pytest.raises(
+        FormulaError, match='sum of fractions must be positive'
+    ):
+        from_fractions({'H': -0.5, 'O': 0.5})
+
+    # empty dict returns empty string (existing behavior)
+    assert from_fractions({}) == ''
+
+
+@pytest.mark.parametrize(
+    ('formula', 'ppm', 'density', 'expected'),
+    [
+        ('NaCl', 58442.77, 1.0, 0.999955),
+        ('NaCl', 1000, 1.0, 0.0171108),
+        ('C6H12O6', 180156.6, 1.0, 0.999983),
+        ('H2SO4', 98077.32, 1.0, 0.999928),
+        ('NaCl', 58442.77, 2.0, 1.999910),  # different density
+    ],
+)
+def test_ppm_to_molarity(formula, ppm, density, expected):
+    """Test Formula.ppm_to_molarity method."""
+    f = Formula(formula)
+    result = f.ppm_to_molarity(ppm, density)
+    assert result == pytest.approx(expected, rel=1e-4)
+
+
+@pytest.mark.parametrize(
+    ('formula', 'molarity', 'density', 'expected'),
+    [
+        ('NaCl', 1.0, 1.0, 58442.67),
+        ('NaCl', 0.5, 1.0, 29221.335),
+        ('C6H12O6', 1.0, 1.0, 180156.6),
+        ('H2SO4', 0.1, 1.0, 9807.732),
+        ('NaCl', 1.0, 2.0, 29221.335),  # different density
+    ],
+)
+def test_molarity_to_ppm(formula, molarity, density, expected):
+    """Test Formula.molarity_to_ppm method."""
+    f = Formula(formula)
+    result = f.molarity_to_ppm(molarity, density)
+    assert result == pytest.approx(expected, rel=1e-4)
+
+
+@pytest.mark.parametrize(
+    (
+        'molarity',
+        'volume',
+        'final_volume',
+        'final_molarity',
+        'expected',
+    ),
+    [
+        (1.0, 10, 100, None, (0.1, 100)),
+        (1.0, 10, None, 0.1, (0.1, 100.0)),
+        (12.0, 10, None, 1.0, (1.0, 120.0)),
+        (2.0, 50, 200, None, (0.5, 200)),
+        (0.5, 25, None, 0.1, (0.1, 125.0)),
+    ],
+)
+def test_dilution(molarity, volume, final_volume, final_molarity, expected):
+    """Test dilution function."""
+    result = dilution(
+        molarity,
+        volume,
+        final_volume=final_volume,
+        final_molarity=final_molarity,
+    )
+    assert result[0] == pytest.approx(expected[0], rel=1e-4)
+    assert result[1] == pytest.approx(expected[1], rel=1e-4)
+
+
+def test_dilution_errors():
+    """Test dilution function error handling."""
+    # missing both parameters
+    with pytest.raises(ValueError):
+        dilution(1.0, 10)
+
+    # providing both parameters
+    with pytest.raises(ValueError):
+        dilution(1.0, 10, final_volume=100, final_molarity=0.1)
+
+    # zero final_molarity
+    with pytest.raises(ValueError):
+        dilution(1.0, 10, final_molarity=0.0)
+
+    # zero final_volume
+    with pytest.raises(ValueError):
+        dilution(1.0, 10, final_volume=0.0)
 
 
 def test_elements():
