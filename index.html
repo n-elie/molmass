@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="author" content="Christoph Gohlke">
+<meta name="generator" content="molmass.py">
+<meta name="robots" content="noarchive">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="/cgohlke.ico" type="image/x-icon">
+<style>
+body {min-width: 455px; margin: 0.5em; padding: 0.25em 0.5em 0 0.5em;}
+header {display: flex; flex-wrap: wrap; align-items: baseline;
+ padding-bottom: 0.4em;}
+header p a {text-decoration: none; color: #000000;}
+header p a:hover {text-decoration: underline; color: #E00000;}
+h1 {margin: 0; padding: 0 0.5em 0 0;}
+h1 a {text-decoration: none; color: #000000;}
+h2.hidden {display: none;}
+form {display: flex; flex-wrap: nowrap; background-color: #eeeeee;
+ border: 1px solid #aaaaaa; padding: 1em;}
+input {margin-left: 0.5em; min-width: 4.5em;}
+input[type=text] {width: 100%;}
+div.formula {flex: 1 1 100%; min-width: 2em; margin-right: 1em;}
+div.buttons {white-space: nowrap;}
+table {border-spacing: 0.6em 0.3em;}
+table caption {padding: 1em 0 0.5em 0; text-align: left;
+ font-weight: bold; font-size: larger;}
+table th {text-align: left;}
+table.results th[scope=row] {text-align: right;}
+table.table th[scope=row] {font-weight: normal;}
+th.right {text-align: right;}
+td.right {text-align: right;}
+tr.spacer * {padding-top: 0.6em;}
+a:hover {text-decoration: underline; color: #E00000;}
+#loading {padding: 0.5em 0; color: #666666;}
+</style>
+<title>Molecular Mass Calculator | Christoph Gohlke</title>
+</head>
+<body>
+<header>
+<h1>Molecular Mass Calculator</h1>
+<p>by <a href="https://www.cgohlke.com">Christoph Gohlke</a></p>
+</header>
+<main>
+<form id="molmass" method="get">
+<div><label for="q"><strong>Formula:</strong></label></div>
+<div class="formula">
+<input type="text" name="q" id="q" value="" disabled>
+</div>
+<div class="buttons">
+<input type="submit" id="a" value="Submit" disabled>
+<input type="reset" id="r" value="Reset">
+</div>
+</form>
+<p id="loading">Loading Pyodide&#8230;</p>
+<div class="content"></div>
+</main>
+<script src="https://cdn.jsdelivr.net/pyodide/v314.0.4/full/pyodide.js"></script>
+<script>
+(async () => {
+  const content = document.querySelector('.content');
+  const loading = document.getElementById('loading');
+  const inputQ = document.getElementById('q');
+  const submitBtn = document.getElementById('a');
+  const form = document.getElementById('molmass');
+
+  let pyAnalyze, pyIsotopes, pyGroups, help = '', version = '';
+
+  async function init() {
+    try {
+      const pyodide = await loadPyodide();
+      loading.textContent = 'Installing molmass\u2026';
+      await pyodide.loadPackage('micropip');
+      const micropip = pyodide.pyimport('micropip');
+      await micropip.install('molmass');
+      await pyodide.runPythonAsync(`
+from molmass import __version__
+from molmass.web import HELP, analyze, groups, isotopes
+
+help_ = HELP.format(version=__version__)
+`);
+      pyAnalyze = pyodide.globals.get('analyze');
+      pyIsotopes = pyodide.globals.get('isotopes');
+      pyGroups = pyodide.globals.get('groups');
+      version = pyodide.runPython('__version__');
+      help = pyodide.runPython('help_');
+      // document.title = `Molecular Mass Calculator v${version}`;
+      loading.style.display = 'none';
+      inputQ.disabled = false;
+      submitBtn.disabled = false;
+
+      const q = new URLSearchParams(location.search).get('q') ?? '';
+      if (q) inputQ.value = q;
+      handleQuery(q);
+    } catch (err) {
+      loading.textContent = `Initialization failed: ${err.message}`;
+    }
+  }
+
+  function handleQuery(q) {
+    q = (q ?? '').trim();
+    if (!pyAnalyze) return;
+    content.innerHTML = !q
+      ? help
+      : q === 'isotopes' ? pyIsotopes()
+      : q === 'groups'   ? pyGroups()
+      : pyAnalyze(q.slice(0, 100));
+  }
+
+  function navigate(q) {
+    q = q.trim();
+    inputQ.value = q;
+    history.pushState({ q }, '', q ? `?q=${encodeURIComponent(q)}` : location.pathname);
+    handleQuery(q);
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    navigate(inputQ.value);
+  });
+
+  document.getElementById('r').addEventListener('click', () => navigate(''));
+
+  // intercept ?q= links in generated content for SPA navigation
+  content.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href]');
+    if (!a) return;
+    const m = a.getAttribute('href').match(/^\?q=(.*)$/);
+    if (m) { e.preventDefault(); navigate(decodeURIComponent(m[1])); }
+  });
+
+  window.addEventListener('popstate', (e) => {
+    const q = e.state?.q ?? new URLSearchParams(location.search).get('q') ?? '';
+    inputQ.value = q;
+    handleQuery(q);
+  });
+
+  init();
+})();
+</script>
+</body>
+</html>
