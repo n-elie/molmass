@@ -59,7 +59,7 @@ Instead, for example, create a Flask app and serve it on a production server::
 
 from __future__ import annotations
 
-__all__ = ['main', 'response']
+__all__ = ['HELP', 'analyze', 'groups', 'isotopes', 'main', 'response']
 
 import os
 import re
@@ -84,11 +84,12 @@ PAGE = """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="author" content="Christoph Gohlke">
 <meta name="generator" content="molmass.py">
 <meta name="robots" content="noarchive">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body {{min-width: 576px; margin: 0.5em; padding: 0.25em 0.5em 0 0.5em;}}
+body {{min-width: 455px; margin: 0.5em; padding: 0.25em 0.5em 0 0.5em;}}
 header {{display: flex; flex-wrap: wrap; align-items: baseline;
  padding-bottom: 0.4em;}}
 header p a {{text-decoration: none; color: #000000;}}
@@ -331,8 +332,10 @@ def analyze(
             result.extend(
                 (
                     '<!--h3>Elemental Composition</h3-->',
-                    '<table class="table">'
-                    '<caption>Elemental Composition</caption>',
+                    (
+                        '<table class="table">'
+                        '<caption>Elemental Composition</caption>'
+                    ),
                     '<tr>',
                     '<th scope="col">Element</th>',
                     '<th scope="col">Count</th>',
@@ -430,9 +433,11 @@ def isotopes() -> str:
             rows.extend(
                 (
                     '<tr>',
-                    '<td class="right">'
-                    f'<a href="?q={massnumber}{ele.symbol}">'
-                    f'<sup>{massnumber}</sup>{ele.symbol}</a></td>',
+                    (
+                        '<td class="right">'
+                        f'<a href="?q={massnumber}{ele.symbol}">'
+                        f'<sup>{massnumber}</sup>{ele.symbol}</a></td>'
+                    ),
                     f'<td class="right">{iso.mass:.8f}</td>',
                     f'<td class="right">{iso.abundance * 100.:.8f}</td>',
                     '</tr>',
