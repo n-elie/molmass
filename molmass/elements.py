@@ -45,7 +45,7 @@ Data sources:
 
 from __future__ import annotations
 
-__version__ = '2026.6.9'
+__version__ = '2026.8.15'
 
 __all__ = [
     'ELECTRON',
@@ -270,14 +270,22 @@ class Element:
         return ',\n    '.join(
             (
                 f'Element(\n    {self.number}, {self.symbol!r}, {self.name!r}',
-                f'group={self.group}, period={self.period},'
-                f' block={self.block!r}, series={self.series}',
-                f'mass={self.mass}, eleneg={self.eleneg},'
-                f' eleaffin={self.eleaffin}',
-                f'covrad={self.covrad}, atmrad={self.atmrad},'
-                f' vdwrad={self.vdwrad}',
-                f'tboil={self.tboil}, tmelt={self.tmelt},'
-                f' density={self.density}',
+                (
+                    f'group={self.group}, period={self.period},'
+                    f' block={self.block!r}, series={self.series}'
+                ),
+                (
+                    f'mass={self.mass}, eleneg={self.eleneg},'
+                    f' eleaffin={self.eleaffin}'
+                ),
+                (
+                    f'covrad={self.covrad}, atmrad={self.atmrad},'
+                    f' vdwrad={self.vdwrad}'
+                ),
+                (
+                    f'tboil={self.tboil}, tmelt={self.tmelt},'
+                    f' density={self.density}'
+                ),
                 f'eleconfig={self.eleconfig!r}',
                 f'oxistates={self.oxistates!r}',
                 f'ionenergy={ionenergy}',
