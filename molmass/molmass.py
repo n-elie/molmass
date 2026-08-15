@@ -44,7 +44,7 @@ of the chemical elements.
 
 :Author: `Christoph Gohlke <https://www.cgohlke.com>`_
 :License: BSD-3-Clause
-:Version: 2026.6.9
+:Version: 2026.8.15
 :DOI: `10.5281/zenodo.7135495 <https://doi.org/10.5281/zenodo.7135495>`_
 
 Quickstart
@@ -76,13 +76,17 @@ Requirements
 This revision was tested with the following requirements and dependencies
 (other versions may work):
 
-- `CPython <https://www.python.org>`_ 3.12.10, 3.13.13, 3.14.5, 3.15.0b2
+- `CPython <https://www.python.org>`_ 3.12.10, 3.13.15, 3.14.7, 3.15.0rc
 - `Flask <https://pypi.org/project/Flask/>`_ 3.1.3 (optional)
-- `Pandas <https://pypi.org/project/pandas/>`_ 2.3.3 (optional)
-- `wxPython <https://pypi.org/project/wxPython/>`_ 4.2.5 (optional)
+- `Pandas <https://pypi.org/project/pandas/>`_ 3.0.5 (optional)
+- `wxPython <https://pypi.org/project/wxPython/>`_ 4.3.1 (optional)
 
 Revisions
 ---------
+
+2026.8.15
+
+- Add HTML application based on Pyodide.
 
 2026.6.9
 
@@ -208,7 +212,7 @@ Element(
 
 from __future__ import annotations
 
-__version__ = '2026.6.9'
+__version__ = '2026.8.15'
 
 __all__ = [
     'AMINOACIDS',
