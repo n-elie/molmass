@@ -29,7 +29,7 @@
 
 """Unittests for the molmass package.
 
-:Version: 2026.6.9
+:Version: 2026.8.15
 
 """
 
@@ -223,10 +223,12 @@ def test_etoh():
     [
         (
             ''.join(e.symbol for e in ELEMENTS),
-            'CHAcAgAlAmArAsAtAuBBaBeBhBiBkBrCaCdCeCfClCmCoCrCsCuDbDyErEsEuFFe'
-            'FmFrGaGdGeHeHfHgHoHsIInIrKKrLaLiLrLuMdMgMnMoMtNNaNbNdNeNiNoNpOOs'
-            'PPaPbPdPmPoPrPtPuRaRbReRfRhRnRuSSbScSeSgSiSmSnSrTaTbTcTeThTiTlTm'
-            'UVWXeYYbZnZr',
+            (
+                'CHAcAgAlAmArAsAtAuBBaBeBhBiBkBrCaCdCeCfClCmCoCrCsCuDbDyErEsEu'
+                'FFeFmFrGaGdGeHeHfHgHoHsIInIrKKrLaLiLrLuMdMgMnMoMtNNaNbNdNeNi'
+                'NoNpOOsPPaPbPdPmPoPrPtPuRaRbReRfRhRnRuSSbScSeSgSiSmSnSrTaTbTc'
+                'TeThTiTlTmUVWXeYYbZnZr'
+            ),
             14693.181589000998,
         ),
         ('', '', 0.0),
@@ -363,8 +365,10 @@ def test_formula_error(formula, message, detail):
         # peptide sequences
         (
             'MDRGEQGLLK',
-            '((C4H5NO3)(C5H7NO3)(C2H3NO)2(C6H12N2O)'
-            '(C6H11NO)2(C5H9NOS)(C5H8N2O2)(C6H12N4O)H2O)',
+            (
+                '((C4H5NO3)(C5H7NO3)(C2H3NO)2(C6H12N2O)'
+                '(C6H11NO)2(C5H9NOS)(C5H8N2O2)(C6H12N4O)H2O)'
+            ),
         ),
         ('peptide(CPK)', '((C3H5NOS)(C6H12N2O)(C5H7NO)H2O)'),
     ],
@@ -922,9 +926,12 @@ def test_from_sequence(sequence, groups, expected):
         ('GG', '((C2H3NO)2H2O)'),
         (
             'GPAVL IMCFY WHKRQ NEDST_2+',
-            '[((C3H5NO)(C3H5NOS)(C4H5NO3)(C5H7NO3)(C9H9NO)(C2H3NO)(C6H7N3O)'
-            '(C6H11NO)(C6H12N2O)(C6H11NO)(C5H9NOS)(C4H6N2O2)(C5H7NO)(C5H8N2O2)'
-            '(C6H12N4O)(C3H5NO2)(C4H7NO2)(C5H9NO)(C11H10N2O)(C9H9NO2)H2O)]2+',
+            (
+                '[((C3H5NO)(C3H5NOS)(C4H5NO3)(C5H7NO3)(C9H9NO)(C2H3NO)'
+                '(C6H7N3O)(C6H11NO)(C6H12N2O)(C6H11NO)(C5H9NOS)(C4H6N2O2)'
+                '(C5H7NO)(C5H8N2O2)(C6H12N4O)(C3H5NO2)(C4H7NO2)(C5H9NO)'
+                '(C11H10N2O)(C9H9NO2)H2O)]2+'
+            ),
         ),
     ],
 )
